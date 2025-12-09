@@ -1,0 +1,8 @@
+[
+  {"producto": "Smartphone A", "mes": "Enero",   "ventas": 130, "ingresos": 26000, "precio": 195},
+  {"producto": "Smartphone B", "mes": "Enero",   "ventas": 80,  "ingresos": 16000, "precio": 195},
+  {"producto": "Tablet X",     "mes": "Enero",   "ventas": 55,  "ingresos": 16500, "precio": 300},
+  {"producto": "Smartphone A", "mes": "Febrero", "ventas": 160, "ingresos": 32000, "precio": 195},
+  {"producto": "Smartphone B", "mes": "Febrero", "ventas": 95,  "ingresos": 19000, "precio": 195},
+  {"producto": "Tablet X",     "mes": "Febrero", "ventas": 75,  "ingresos": 22500, "precio": 295}
+]
