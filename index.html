@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard — Energía y Bienestar (Demo)</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Dashboard de Ventas — Demo (Google Charts + D3.js)</h1>
+    <div class="controls">
+      <button id="updateBtn">Actualizar</button>
+      <span id="status">Fuente: data.json</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="chart-card">
+      <h2>Ventas mensuales por producto (Google ColumnChart)</h2>
+      <div id="columnchart" class="chart"></div>
+    </section>
+
+    <section class="chart-card">
+      <h2>Visualización multidimensional (D3 - Burbuja)</h2>
+      <div id="bubblechart" class="chart"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Proyecto: actualización dinámica desde JSON y sincronización de gráficas.</p>
+  </footer>
+
+  <script src="analisis_visualizacion_ventas.js"></script>
+</body>
+</html>
