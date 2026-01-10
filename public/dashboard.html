@@ -1,155 +1,155 @@
-<! doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard Ventas - Google Charts + D3</title>
+  <title>Herramientas de Visualización - Dashboard de Ventas</title>
 
   <script src="https://www.gstatic.com/charts/loader.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
 
   <style>
+        h1 {
+          color: #12306c;
+        }
     body { font-family: system-ui, Arial; margin: 16px; }
-    .topbar { display: flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    
-    /* KPI Cards */
-    .kpi-section { margin-top: 16px; }
-    .kpi-grid { display: grid; grid-template-columns:  repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-    . kpi-card { 
-      border: 1px solid #e5e5e5; 
-      border-radius:12px; 
-      padding:16px; 
-      background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color:  white;
-      transition: transform 0.2s;
+    .topbar {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      background:#f3f3f3;
+      border-radius:12px;
+      padding:12px 18px;
     }
-    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    .kpi-card.green { background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); }
-    .kpi-card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    .kpi-card.blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .kpi-card.purple { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .kpi-label { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
-    . kpi-value { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
-    . kpi-detail { font-size: 12px; opacity: 0.85; }
-    
-    . grid { display: grid; grid-template-columns:  1fr; gap:  16px; margin-top: 16px; }
+      h2 {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 5px;
+        color: #333;
+        font-size: 1.6rem;
+        font-weight: 600;
+      }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
     @media (min-width: 900px){ .grid { grid-template-columns: 1fr 1fr; } }
-    . card { border:1px solid #e5e5e5; border-radius:12px; padding:12px; }
-    #tooltip { position:  fixed; pointer-events: none; background:#111; color:#fff; padding:8px 10px;
-               border-radius:8px; font-size:12px; opacity:0; transform:  translate(8px, 8px); }
-    button { padding: 10px 14px; border-radius:10px; border:1px solid #ddd; cursor:pointer; }
+    .card { border:1px solid #e5e5e5; border-radius:12px; padding:12px; }
+    #tooltip { position: fixed; pointer-events:none; background:#111; color:#fff; padding:8px 10px;
+               border-radius:8px; font-size:12px; opacity:0; transform: translate(8px, 8px); }
+    button {
+      padding:18px 32px;
+      border-radius:10px;
+      border:1px solid #2d3590;
+      cursor:pointer;
+      background:#2d3590;
+      color:#fff;
+      font-weight:600;
+      font-size:1.2rem;
+      transition:background 0.2s;
+    }
+    button:hover {
+      background:#2d3590;
+    }
     #status { color:#333; }
   </style>
 </head>
 
 <body>
+  <h2 style="width:60%; display:flex; justify-content:left; margin-top:24px; margin-bottom:10px; padding-left:40px;">Herramientas de Visualización</h2>
   <div class="topbar">
-    <h2 style="margin: 0;">Dashboard de desempeño (Ene-Feb)</h2>
-    <button id="btnActualizar">Actualizar</button>
-    <span id="status"></span>
+    <h1 style="flex:1;">Desempeño de Ventas (Ene - Feb)</h1>
+    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+      <button id="btnActualizar">Actualizar</button>
+      <span id="status" style="margin-top:2px;"></span>
+    </div>
   </div>
 
-  <!-- KPI Summary Section -->
-  <div class="kpi-section">
-    <h3 style="margin-bottom:  12px;">Resumen de KPIs</h3>
-    <div class="kpi-grid">
-      <div class="kpi-card green">
-        <div class="kpi-label">Ventas Totales</div>
-        <div class="kpi-value" id="kpi-ventas">-</div>
-        <div class="kpi-detail" id="kpi-ventas-detail">-</div>
-      </div>
-      <div class="kpi-card blue">
-        <div class="kpi-label">Ingresos Totales</div>
-        <div class="kpi-value" id="kpi-ingresos">-</div>
-        <div class="kpi-detail" id="kpi-ingresos-detail">-</div>
-      </div>
-      <div class="kpi-card orange">
-        <div class="kpi-label">Precio Promedio</div>
-        <div class="kpi-value" id="kpi-precio">-</div>
-        <div class="kpi-detail" id="kpi-precio-detail">-</div>
-      </div>
-      <div class="kpi-card purple">
-        <div class="kpi-label">Producto Top</div>
-        <div class="kpi-value" id="kpi-top-producto" style="font-size:  20px;">-</div>
-        <div class="kpi-detail" id="kpi-top-detail">-</div>
-      </div>
+  <!-- Producto Top centrado -->
+  <div style="width:100%; display:flex; justify-content:center; margin-top:24px; margin-bottom:10px;">
+    <div class="card" style="min-width:220px; text-align:center; background:#f8f8ff; box-shadow:0 2px 8px #eee;">
+      <div style="font-size:20px; color:#555;">Producto Top</div>
+      <div id="productoTop" style="font-size:32px; font-weight:bold; color:#3366cc;">-</div>
+      <div id="productoTopVentas" style="font-size:16px; color:#888;"> </div>
+    </div>
+  </div>
+
+  <!-- Resumen de métricas -->
+  <div id="metricasResumen" style="width:100%; display:flex; gap:24px; margin:24px 0; flex-wrap:wrap; justify-content:center; align-items:center;">
+    <div class="card" style="min-width:180px; text-align:center;">
+      <div style="font-size:18px; color:#555;">Ventas totales</div>
+      <div id="ventasTotales" style="font-size:32px; font-weight:bold;">-</div>
+    </div>
+    <div class="card" style="min-width:180px; text-align:center;">
+      <div style="font-size:18px; color:#555;">Transacciones</div>
+      <div id="numTransacciones" style="font-size:32px; font-weight:bold;">-</div>
+    </div>
+    <div class="card" style="min-width:180px; text-align:center;">
+      <div style="font-size:18px; color:#555;">Promedio por venta</div>
+      <div id="promedioVenta" style="font-size:32px; font-weight:bold;">-</div>
     </div>
   </div>
 
   <div class="grid">
     <div class="card">
-      <h3>Google Charts:  Ventas mensuales por producto</h3>
-      <div id="googleChart" style="width: 100%; height:420px;"></div>
+        <h2>Ventas Mensuales por Producto</h2>
+      <div id="googleChart" style="width:100%; height:420px;"></div>
     </div>
 
     <div class="card">
-      <h3>D3: Burbuja multidimensional (Ventas/Ingresos/Precio)</h3>
+        <h2>Ventas por Producto (Ventas/Ingresos/Precio)</h2>
       <div id="d3Container" style="width:100%; height:420px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>Participación del Mercado</h2>
+        <div id="donaMercado" style="width:100%; height:420px; display:flex; justify-content:center; align-items:center;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Evolución de Ventas (Área)</h2>
+      <div id="areaVentas" style="width:100%; height:420px; display:flex; justify-content:center; align-items:center;"></div>
     </div>
   </div>
 
   <div id="tooltip"></div>
 
   <script>
+        function drawAreaVentas(data) {
+          // Agrupa ventas totales por mes
+          const meses = Array.from(new Set(data.map(d => d.mes)));
+          const resumen = meses.map(mes => {
+            const ventas = data.filter(d => d.mes === mes).reduce((sum, d) => sum + d.ventas, 0);
+            return [mes, ventas];
+          });
+          const tableArr = [['Mes', 'Ventas'], ...resumen];
+          const dataTable = google.visualization.arrayToDataTable(tableArr);
+          const options = {
+            legend: { position: 'none' },
+            height: 420,
+            chartArea: { left: 60, top: 50, width: '75%', height: '70%' },
+            vAxis: { title: 'Ventas', minValue: 0 },
+            hAxis: { title: 'Mes' },
+            colors: ['#0099c6'],
+            areaOpacity: 0.3,
+            lineWidth: 3,
+          };
+          const chart = new google.visualization.AreaChart(document.getElementById('areaVentas'));
+          chart.draw(dataTable, options);
+        }
     let currentData = [];
     let googleChartInstance = null;
     let googleDataTable = null;
     let googleOptions = null;
 
-    // Calculate and update KPIs
-    function updateKPIs(data){
-      if (!data || data.length === 0) return;
-
-      // Total ventas
-      const totalVentas = data.reduce((sum, d) => sum + d.ventas, 0);
-      document.getElementById("kpi-ventas").textContent = totalVentas. toLocaleString();
-      
-      // Promedio ventas por producto
-      const avgVentas = Math.round(totalVentas / data.length);
-      document.getElementById("kpi-ventas-detail").textContent = `Promedio: ${avgVentas. toLocaleString()} unidades`;
-
-      // Total ingresos
-      const totalIngresos = data.reduce((sum, d) => sum + d.ingresos, 0);
-      document.getElementById("kpi-ingresos").textContent = `$${totalIngresos.toLocaleString()}`;
-      
-      // Ingresos promedio
-      const avgIngresos = Math.round(totalIngresos / data.length);
-      document.getElementById("kpi-ingresos-detail").textContent = `Promedio: $${avgIngresos.toLocaleString()}`;
-
-      // Precio promedio
-      const avgPrecio = data.reduce((sum, d) => sum + d.precio, 0) / data.length;
-      document.getElementById("kpi-precio").textContent = `$${avgPrecio.toFixed(2)}`;
-      
-      // Rango de precios
-      const minPrecio = Math.min(...data.map(d => d.precio));
-      const maxPrecio = Math.max(...data.map(d => d.precio));
-      document.getElementById("kpi-precio-detail").textContent = `Rango: $${minPrecio} - $${maxPrecio}`;
-
-      // Producto con más ventas
-      const ventasPorProducto = {};
-      data.forEach(d => {
-        if (! ventasPorProducto[d.producto]) {
-          ventasPorProducto[d.producto] = 0;
-        }
-        ventasPorProducto[d.producto] += d. ventas;
-      });
-      
-      const topProducto = Object.entries(ventasPorProducto)
-        .sort((a, b) => b[1] - a[1])[0];
-      
-      document.getElementById("kpi-top-producto").textContent = topProducto[0];
-      document.getElementById("kpi-top-detail").textContent = `${topProducto[1]. toLocaleString()} unidades vendidas`;
-    }
-
     // GOOGLE CHARTS
     google.charts.load('current', { packages: ['corechart'] });
 
     function buildGoogleTable(data){
-      const meses = Array. from(new Set(data.map(d => d.mes)));
-      const productos = Array.from(new Set(data.map(d => d. producto)));
+      const meses = Array.from(new Set(data.map(d => d.mes)));
+      const productos = Array.from(new Set(data.map(d => d.producto)));
 
-      // Header:  Mes | prod1 | prod2 | ... 
-      const table = [['Mes', ... productos]];
+      // Header: Mes | prod1 | prod2 | ...
+      const table = [['Mes', ...productos]];
       for (const mes of meses){
         const row = [mes];
         for (const p of productos){
@@ -168,13 +168,13 @@
       googleOptions = {
         legend: { position: 'top' },
         height: 420,
-        chartArea: { left: 50, top: 50, width:  '80%', height: '70%' },
+        chartArea: { left: 50, top: 50, width: '80%', height: '70%' },
         vAxis: { title: 'Ventas' },
         hAxis: { title: 'Mes' }
       };
 
       googleChartInstance = new google.visualization.ColumnChart(document.getElementById('googleChart'));
-      googleChartInstance. draw(googleDataTable, googleOptions);
+      googleChartInstance.draw(googleDataTable, googleOptions);
     }
 
     function redrawGoogleOnResize(){
@@ -189,22 +189,22 @@
       container.innerHTML = "";
 
       const rect = container.getBoundingClientRect();
-      const width = rect. width;
+      const width = rect.width;
       const height = rect.height;
 
       const margin = { top: 30, right: 20, bottom: 50, left: 60 };
       const w = width - margin.left - margin.right;
-      const h = height - margin.top - margin. bottom;
+      const h = height - margin.top - margin.bottom;
 
       const svg = d3.select(container)
         .append("svg")
         .attr("width", width)
         .attr("height", height);
 
-      const g = svg. append("g")
+      const g = svg.append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
-      const productos = Array.from(new Set(data.map(d => d. producto)));
+      const productos = Array.from(new Set(data.map(d => d.producto)));
       const meses = Array.from(new Set(data.map(d => d.mes)));
 
       const x = d3.scalePoint().domain(productos).range([0, w]).padding(0.5);
@@ -240,12 +240,12 @@
           .attr("cx", d => x(d.producto))
           .attr("cy", y(0))
           .attr("r", 0)
-          .attr("fill", d => color(d. mes))
+          .attr("fill", d => color(d.mes))
           .attr("opacity", 0.85)
           .on("mousemove", (event, d) => {
             tooltip.style("opacity", 1)
               .style("left", event.clientX + "px")
-              .style("top", event. clientY + "px")
+              .style("top", event.clientY + "px")
               .html(`
                 <b>${d.producto}</b> (${d.mes})<br/>
                 Ventas: ${d.ventas}<br/>
@@ -254,7 +254,7 @@
               `);
           })
           .on("mouseleave", () => tooltip.style("opacity", 0))
-          .on("click", (_e, d) => alert(`Detalle: ${d.producto} - ${d. mes}`))
+          .on("click", (_e, d) => alert(`Detalle: ${d.producto} - ${d.mes}`))
           .call(enter => enter.transition().duration(700)
             .attr("cy", d => y(d.ingresos))
             .attr("r", d => r(d.ventas))
@@ -264,8 +264,74 @@
           .attr("cy", d => y(d.ingresos))
           .attr("r", d => r(d.ventas))
         ),
-        exit => exit.call(exit => exit. transition().duration(400).attr("r", 0).remove())
+        exit => exit.call(exit => exit.transition().duration(400).attr("r", 0).remove())
       );
+    }
+
+
+    function drawDonaMercado(data){
+      // Agrupa ventas totales por producto
+      const productos = Array.from(new Set(data.map(d => d.producto)));
+      const ventasPorProducto = productos.map(p => {
+        const total = data.filter(d => d.producto === p).reduce((sum, d) => sum + d.ventas, 0);
+        return [p, total];
+      });
+      const totalVentas = ventasPorProducto.reduce((sum, v) => sum + v[1], 0);
+      const tableArr = [['Producto', 'Ventas'], ...ventasPorProducto];
+      const dataTable = google.visualization.arrayToDataTable(tableArr);
+      const options = {
+        pieHole: 0.5,
+        legend: { position: 'right' },
+        chartArea: { left: 20, top: 20, width: '90%', height: '80%' },
+        height: 420,
+        colors: ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099', '#0099c6', '#dd4477', '#66aa00'],
+        tooltip: {
+          trigger: 'focus',
+          text: 'value',
+        },
+        pieSliceText: 'percentage',
+      };
+      const chart = new google.visualization.PieChart(document.getElementById('donaMercado'));
+      google.visualization.events.addListener(chart, 'onmouseover', function(e) {
+        const row = e.row;
+        if (row != null) {
+          const producto = dataTable.getValue(row, 0);
+          const ventas = dataTable.getValue(row, 1);
+          document.getElementById('tooltip').style.opacity = 1;
+          document.getElementById('tooltip').innerHTML = `<b>${producto}</b><br>Ventas: ${ventas}`;
+        }
+      });
+      google.visualization.events.addListener(chart, 'onmouseout', function() {
+        document.getElementById('tooltip').style.opacity = 0;
+      });
+      chart.draw(dataTable, options);
+    }
+    function actualizarKPIs(data){
+      // Ventas totales
+      const ventasTotales = data.reduce((sum, d) => sum + d.ingresos, 0);
+      // Transacciones (ventas)
+      const numTransacciones = data.reduce((sum, d) => sum + d.ventas, 0);
+      // Promedio por venta
+      const promedioVenta = numTransacciones > 0 ? (ventasTotales / numTransacciones) : 0;
+      document.getElementById('ventasTotales').textContent = `$${ventasTotales.toLocaleString()}`;
+      document.getElementById('numTransacciones').textContent = numTransacciones.toLocaleString();
+      document.getElementById('promedioVenta').textContent = `$${promedioVenta.toFixed(2)}`;
+
+      // Producto Top
+      const ventasPorProducto = {};
+      data.forEach(d => {
+        ventasPorProducto[d.producto] = (ventasPorProducto[d.producto] || 0) + d.ventas;
+      });
+      let topProducto = '-';
+      let topVentas = 0;
+      for (const [producto, ventas] of Object.entries(ventasPorProducto)) {
+        if (ventas > topVentas) {
+          topProducto = producto;
+          topVentas = ventas;
+        }
+      }
+      document.getElementById('productoTop').textContent = topProducto;
+      document.getElementById('productoTopVentas').textContent = topVentas > 0 ? `Ventas: ${topVentas.toLocaleString()}` : '';
     }
 
     async function loadInitial(){
@@ -275,12 +341,17 @@
 
       google.charts.setOnLoadCallback(() => {
         drawGoogleChart(currentData);
-        window.addEventListener("resize", redrawGoogleOnResize);
+        drawDonaMercado(currentData);
+        drawAreaVentas(currentData);
+        window.addEventListener("resize", () => {
+          redrawGoogleOnResize();
+          drawDonaMercado(currentData);
+          drawAreaVentas(currentData);
+        });
       });
-
       drawD3(currentData);
-      updateKPIs(currentData);
-      document.getElementById("status").textContent = "Listo";
+      actualizarKPIs(currentData);
+      document.getElementById("status").textContent = "Cargado ✓";
     }
 
     async function actualizar(){
@@ -288,11 +359,12 @@
       const res = await fetch("/api/actualizar");
       currentData = await res.json();
 
-      // Redibuja ambas visualizaciones sin recargar la página
+      // Redibuja todas las visualizaciones y KPIs sin recargar la página
       drawGoogleChart(currentData);
+      drawDonaMercado(currentData);
+      drawAreaVentas(currentData);
       drawD3(currentData);
-      updateKPIs(currentData);
-
+      actualizarKPIs(currentData);
       document.getElementById("status").textContent = "Actualizado ✓";
     }
 
