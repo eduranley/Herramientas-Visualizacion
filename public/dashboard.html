@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard Ventas - Google Charts + D3</title>
+
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    body { font-family: system-ui, Arial; margin: 16px; }
+    .topbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+    @media (min-width: 900px){ .grid { grid-template-columns: 1fr 1fr; } }
+    .card { border:1px solid #e5e5e5; border-radius:12px; padding:12px; }
+    #tooltip { position: fixed; pointer-events:none; background:#111; color:#fff; padding:8px 10px;
+               border-radius:8px; font-size:12px; opacity:0; transform: translate(8px, 8px); }
+    button { padding:10px 14px; border-radius:10px; border:1px solid #ddd; cursor:pointer; }
+    #status { color:#333; }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <h2 style="margin:0;">Dashboard de desempeño (Ene-Feb)</h2>
+    <button id="btnActualizar">Actualizar</button>
+    <span id="status"></span>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Google Charts: Ventas mensuales por producto</h3>
+      <div id="googleChart" style="width:100%; height:420px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>D3: Burbuja multidimensional (Ventas/Ingresos/Precio)</h3>
+      <div id="d3Container" style="width:100%; height:420px;"></div>
+    </div>
+  </div>
+
+  <div id="tooltip"></div>
+
+  <script>
+    let currentData = [];
+    let googleChartInstance = null;
+    let googleDataTable = null;
+    let googleOptions = null;
+
+    // GOOGLE CHARTS
+    google.charts.load('current', { packages: ['corechart'] });
+
+    function buildGoogleTable(data){
+      const meses = Array.from(new Set(data.map(d => d.mes)));
+      const productos = Array.from(new Set(data.map(d => d.producto)));
+
+      // Header: Mes | prod1 | prod2 | ...
+      const table = [['Mes', ...productos]];
+      for (const mes of meses){
+        const row = [mes];
+        for (const p of productos){
+          const item = data.find(d => d.mes === mes && d.producto === p);
+          row.push(item ? item.ventas : 0);
+        }
+        table.push(row);
+      }
+      return table;
+    }
+
+    function drawGoogleChart(data){
+      const tableArr = buildGoogleTable(data);
+      googleDataTable = google.visualization.arrayToDataTable(tableArr);
+
+      googleOptions = {
+        legend: { position: 'top' },
+        height: 420,
+        chartArea: { left: 50, top: 50, width: '80%', height: '70%' },
+        vAxis: { title: 'Ventas' },
+        hAxis: { title: 'Mes' }
+      };
+
+      googleChartInstance = new google.visualization.ColumnChart(document.getElementById('googleChart'));
+      googleChartInstance.draw(googleDataTable, googleOptions);
+    }
+
+    function redrawGoogleOnResize(){
+      if (googleChartInstance && googleDataTable && googleOptions){
+        googleChartInstance.draw(googleDataTable, googleOptions);
+      }
+    }
+
+    // D3 (Burbujas)
+    function drawD3(data){
+      const container = document.getElementById("d3Container");
+      container.innerHTML = "";
+
+      const rect = container.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+
+      const margin = { top: 30, right: 20, bottom: 50, left: 60 };
+      const w = width - margin.left - margin.right;
+      const h = height - margin.top - margin.bottom;
+
+      const svg = d3.select(container)
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      const g = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const productos = Array.from(new Set(data.map(d => d.producto)));
+      const meses = Array.from(new Set(data.map(d => d.mes)));
+
+      const x = d3.scalePoint().domain(productos).range([0, w]).padding(0.5);
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.ingresos) * 1.1])
+        .range([h, 0]);
+
+      const r = d3.scaleSqrt()
+        .domain([0, d3.max(data, d => d.ventas)])
+        .range([6, 30]);
+
+      const color = d3.scaleOrdinal().domain(meses).range(d3.schemeTableau10);
+
+      g.append("g").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x));
+      g.append("g").call(d3.axisLeft(y));
+
+      g.append("text")
+        .attr("x", w/2).attr("y", h + 40)
+        .attr("text-anchor","middle").text("Producto");
+
+      g.append("text")
+        .attr("transform","rotate(-90)")
+        .attr("x", -h/2).attr("y", -45)
+        .attr("text-anchor","middle").text("Ingresos");
+
+      const tooltip = d3.select("#tooltip");
+
+      const circles = g.selectAll("circle")
+        .data(data, d => `${d.producto}-${d.mes}`);
+
+      circles.join(
+        enter => enter.append("circle")
+          .attr("cx", d => x(d.producto))
+          .attr("cy", y(0))
+          .attr("r", 0)
+          .attr("fill", d => color(d.mes))
+          .attr("opacity", 0.85)
+          .on("mousemove", (event, d) => {
+            tooltip.style("opacity", 1)
+              .style("left", event.clientX + "px")
+              .style("top", event.clientY + "px")
+              .html(`
+                <b>${d.producto}</b> (${d.mes})<br/>
+                Ventas: ${d.ventas}<br/>
+                Ingresos: $${d.ingresos}<br/>
+                Precio: $${d.precio}
+              `);
+          })
+          .on("mouseleave", () => tooltip.style("opacity", 0))
+          .on("click", (_e, d) => alert(`Detalle: ${d.producto} - ${d.mes}`))
+          .call(enter => enter.transition().duration(700)
+            .attr("cy", d => y(d.ingresos))
+            .attr("r", d => r(d.ventas))
+          ),
+        update => update.call(update => update.transition().duration(700)
+          .attr("cx", d => x(d.producto))
+          .attr("cy", d => y(d.ingresos))
+          .attr("r", d => r(d.ventas))
+        ),
+        exit => exit.call(exit => exit.transition().duration(400).attr("r", 0).remove())
+      );
+    }
+
+    async function loadInitial(){
+      document.getElementById("status").textContent = "Cargando...";
+      const res = await fetch("/api/ventas");
+      currentData = await res.json();
+
+      google.charts.setOnLoadCallback(() => {
+        drawGoogleChart(currentData);
+        window.addEventListener("resize", redrawGoogleOnResize);
+      });
+
+      drawD3(currentData);
+      document.getElementById("status").textContent = "Listo";
+    }
+
+    async function actualizar(){
+      document.getElementById("status").textContent = "Actualizando...";
+      const res = await fetch("/api/actualizar");
+      currentData = await res.json();
+
+      // Redibuja ambas visualizaciones sin recargar la página
+      drawGoogleChart(currentData);
+      drawD3(currentData);
+
+      document.getElementById("status").textContent = "Actualizado ✓";
+    }
+
+    document.getElementById("btnActualizar").addEventListener("click", actualizar);
+    loadInitial();
+  </script>
+</body>
+</html>
